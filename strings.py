@@ -7,6 +7,7 @@
 Необходимо посчитать количество слов в строке и вывести количество этих слов.
 """
 
+
 def parse_hash_str(msg: str) -> int:
     if not msg.startswith('#'):
         raise ValueError("It's not a hash string")
@@ -20,31 +21,6 @@ def parse_hash_str(msg: str) -> int:
     return cnt
 
 
-# def parse_hash_str(msg: str) -> list:
-#     if not msg.startswith('#'):
-#         raise ValueError("It's not a hash string")
-#     words = []
-#     word = []
-#     msg = msg.replace('#', '', 1)
-#     for i, char in enumerate(msg):
-#         if char.islower() or not char.isalpha():
-#             word.append(char)
-#             if not i == len(msg) - 1:
-#                 continue
-#         words.append(''.join(word))
-#         word[:] = []
-#         word.append(char)
-#     return words
-
-
 if __name__ == '__main__':
-    # msgs = [
-    #     '##1justAString',
-    #     '#приветКакДела',
-    #     '#меняЗовутЕгорМнеМногоЛет',
-    #     'blahBlah'
-    # ]
-    # for m in msgs:
-    #     print(m, parse_hash_str(m), sep='\t')
     m = input()
     print(parse_hash_str(m))
