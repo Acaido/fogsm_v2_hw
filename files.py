@@ -2,32 +2,41 @@ import sys
 
 
 class WrongScheduleError(Exception):
-    """"""
+    pass
 
 
-WEEK_DAYS = 'понедельник вторник среда четверг пятница суббота'.split()
+WEEK_DAYS = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота')
 
 
 def main(fin):
+    # Ключи соответсвуют типам занятий в файле-расписании.
     counter = {
-        'лекц.': 0,
-        'практ.': 0,
-        'лаб.': 0
+        'лекция': 0,
+        'практика': 0,
+        'лабораторная': 0
     }
     keys = counter.keys()
     try:
         with open(fin, 'r') as fi:
             for line in fi:
                 striped = line.strip()
-                if striped.lower() in WEEK_DAYS or striped == '':
+                capitalized = striped.capitalize()
+                if capitalized in WEEK_DAYS or striped == '':
                     continue
-                if striped.lower() == 'воскресенье':
+                if capitalized == 'Воскресенье':
                     raise WrongScheduleError(
                         'Это какое-то неправильное расписание. Делали его неправильные люди.')
                 try:
+                    # Тип занятия значится в конце строки в скобках, например
+                    # (лекция) или (практика). Сначала разделяем строку левой
+                    # скобкой по первому вхождению и берем все, что справа -
+                    # split('(', 1)[1] -> "лекция)...", затем остаток разделяем
+                    # правой скобкой также по первому вхождению и берем все,
+                    # что слева - split(')', 1)[0] -> "лекция".
                     occupation_type = striped.split('(', 1)[1].split(')', 1)[0]
                 except IndexError:
-                    print('Бардак в расписании. Что это - "{}"?'.format(striped))
+                    print(
+                        'Бардак в расписании. Что это - "{}"?'.format(striped))
                     continue
                 if occupation_type in keys:
                     counter[occupation_type] += 1
