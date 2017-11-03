@@ -14,6 +14,9 @@ def walk(top, maxdepth=None, tab=''):
     top = fspath(top)
     dirs = []
     nondirs = []
+    if maxdepth is not None and maxdepth < 1:
+        yield top, dirs, nondirs, tab
+        return
 
     try:
         scandir_it = scandir(top)
@@ -23,7 +26,9 @@ def walk(top, maxdepth=None, tab=''):
     for entry in scandir_it:
         # Если не можем получить доступ, считаем файлом.
         try:
-            is_dir = entry.is_dir()
+            # По ссылкам на директории не ходим. Просто выводим их
+            # как ссылки на регулярные файлы.
+            is_dir = entry.is_dir(follow_symlinks=False)
         except OSError:
             is_dir = False
         if is_dir:
@@ -33,21 +38,21 @@ def walk(top, maxdepth=None, tab=''):
 
     yield top, dirs, nondirs, tab
 
-    if maxdepth is None or maxdepth > 1:
-        last = len(dirs) - 1
-        for i, dirname in enumerate(dirs):
-            new_tab = tab + ('   ' if i == last else '|  ')
-            new_path = join(top, dirname)
-            if not islink(new_path):
-                yield from walk(new_path,
-                                maxdepth - 1 if maxdepth else maxdepth, new_tab)
+    last = len(dirs) - 1
+    for i, dirname in enumerate(dirs):
+        new_tab = tab + ('   ' if i == last else '|  ')
+        new_path = join(top, dirname)
+        if not islink(new_path):
+            yield from walk(new_path,
+                            maxdepth - 1 if maxdepth else maxdepth, new_tab)
 
 
 def tree(din, maxdepth=None):
     din = abspath(din)
     for root, dirs, files, tab in walk(din, maxdepth):
-        if root == din and din == getcwd():
-            print('.')
+        if root == din:
+            if din == getcwd():
+                print('.')
         else:
             print('{}|- {}'.format(tab[:-3], basename(root)))
         for f in files:
@@ -61,7 +66,7 @@ def tree(din, maxdepth=None):
 
 if __name__ == '__main__':
     try:
-        tree(sys.argv[1], 2)
+        tree(sys.argv[1])
     except (FileNotFoundError, NotADirectoryError) as ex:
         print(ex)
     except IndexError:
