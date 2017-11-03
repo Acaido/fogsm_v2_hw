@@ -20,32 +20,23 @@ def walk(top, maxdepth=None, tab=''):
     except OSError:
         return
 
-    with scandir_it:
-        while True:
-            try:
-                try:
-                    entry = next(scandir_it)
-                except StopIteration:
-                    break
-            except OSError:
-                return
-
-            try:
-                is_dir = entry.is_dir()
-            except OSError:
-                is_dir = False
-
-            if is_dir:
-                dirs.append(entry.name)
-            else:
-                nondirs.append(entry.name)
+    for entry in scandir_it:
+        # Если не можем получить доступ, считаем файлом.
+        try:
+            is_dir = entry.is_dir()
+        except OSError:
+            is_dir = False
+        if is_dir:
+            dirs.append(entry.name)
+        else:
+            nondirs.append(entry.name)
 
     yield top, dirs, nondirs, tab
 
     if maxdepth is None or maxdepth > 1:
         last = len(dirs) - 1
         for i, dirname in enumerate(dirs):
-            new_tab = tab + (' ' * 3 if i == last else '|  ')
+            new_tab = tab + ('   ' if i == last else '|  ')
             new_path = join(top, dirname)
             if not islink(new_path):
                 yield from walk(new_path,
@@ -55,20 +46,22 @@ def walk(top, maxdepth=None, tab=''):
 def tree(din, maxdepth=None):
     din = abspath(din)
     for root, dirs, files, tab in walk(din, maxdepth):
-        if root == din:
-            if din == getcwd():
-                print('.')
+        if root == din and din == getcwd():
+            print('.')
         else:
             print('{}|- {}'.format(tab[:-3], basename(root)))
         for f in files:
-            fp = join(root, f)
-            f = '{} -> {}'.format(f, readlink(fp)) if islink(fp) else f
-            print('{}|- {}'.format(tab, f))
+            full_path = join(root, f)
+            if islink(full_path):
+                out = '{} -> {}'.format(f, readlink(full_path))
+            else:
+                out = f
+            print('{}|- {}'.format(tab, out))
 
 
 if __name__ == '__main__':
     try:
-        tree(sys.argv[1])
+        tree(sys.argv[1], 2)
     except (FileNotFoundError, NotADirectoryError) as ex:
         print(ex)
     except IndexError:
