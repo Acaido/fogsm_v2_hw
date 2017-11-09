@@ -23,43 +23,41 @@ def main(file_to_format, max_width=80, author='Anonymous'):
     # краю, '>' - по правому), задаем ширину строки, без которой выравнивание
     # не сработает, т.к. по-умолчанию ширина определяется на основе содержимого.
     formatter = '{:^' + str(max_width) + '}\n'
-    fin = open(file_to_format)
-    fout = open('{}.formatted{}'.format(*splitext(file_to_format)), 'w')
-    # Получаем имя файла из абсолютного пути, выводим его заглавными буквами
-    # первой строкой по центру, используя форматтер.
-    fout.write(formatter.format(basename(fin.name).upper()))
-    for line in fin:
-        # Пустые строки пропускаем.
-        if line.strip() == '':
-            continue
-        # Абзацы разеделены пустой строкой.
-        fout.write('\n')
-        # Форматтер не переносит текст на новую строку, если тот превышает
-        # заданную длину, поэтому необходимо позаботиться об этом
-        # самостоятельно.
-        words = line.split()
-        # Первая строка в абзаце начинается с красной строки в 4 пробела и с
-        # заглавной буквы.
-        to_print = '    '
-        first = True
-        for word in words:
-            if first:
-                word = word.capitalize()
-            else:
+    with open(file_to_format) as fin, open(
+            '{}.formatted{}'.format(*splitext(file_to_format)), 'w') as fout:
+        # Получаем имя файла из абсолютного пути, выводим его заглавными буквами
+        # первой строкой по центру, используя форматтер.
+        header = basename(fin.name)
+        header = header.upper()
+        fout.write(formatter.format(header))
+        for line in fin:
+            # Пустые строки пропускаем.
+            if line.strip() == '':
+                continue
+            # Абзацы разеделены пустой строкой.
+            fout.write('\n')
+            # Форматтер не переносит текст на новую строку, если тот превышает
+            # заданную длину, поэтому необходимо позаботиться об этом
+            # самостоятельно.
+            words = line.split()
+            words = iter(words)
+            # Первая строка в абзаце начинается с красной строки в 4 пробела и с
+            # заглавной буквы. Пустные строки пропускаются, поэтому хотя бы одно
+            # слово будет. Значит IndexError при выполнении next() не словим.
+            to_print = '    ' + next(words).capitalize()
+            for word in words:
                 word = ' ' + word
-            first = False
-            if len(to_print) + len(word) < max_width:
-                to_print = to_print + word
-            else:
+                if len(to_print + word) < max_width:
+                    to_print = to_print + word
+                else:
+                    fout.write(formatter.format(to_print))
+                    to_print = word
+            # Слова в абзаце кончились,
+            # а неполная строка еще не записана в файл.
+            if len(to_print):
                 fout.write(formatter.format(to_print))
-                to_print = word
-        # Слова в абзаце кончились, а неполная строка еще не записана в файл.
-        if len(to_print):
-            fout.write(formatter.format(to_print))
-    fout.write('\n')
-    fout.write(formatter.format(author))
-    fin.close()
-    fout.close()
+        fout.write('\n')
+        fout.write(formatter.format(author))
 
 
 if __name__ == '__main__':
@@ -76,7 +74,8 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-a', '--author', default='Anonymous',
-        help='Имя автора. Будет добавлено в конце форматированного текста.'
+        help=('Имя автора. Будет добавлено в конце форматированного текста.'
+              'Имя, разделенное пробелами, необходимо брать в кавычки')
     )
     args = parser.parse_args()
     try:
