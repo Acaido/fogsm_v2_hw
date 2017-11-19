@@ -28,6 +28,10 @@ class Figure(metaclass=ABCMeta):
 
 class Rectangle(Figure):
     def __init__(self, width, height):
+        if width <= 0 or height <= 0:
+            raise ValueError(
+                'Стороны должны иметь положительные значения. '
+                'Полученные значения width={}, height={}'.format(width, height))
         self.width = width
         self.height = height
 
@@ -44,6 +48,9 @@ class Rectangle(Figure):
 
 class Circle(Figure):
     def __init__(self, radius):
+        if radius <= 0:
+            raise ValueError(
+                'Радиус должен быть положительным, radius={}'.format(radius))
         self.radius = radius
 
     def perimeter(self):
@@ -59,9 +66,14 @@ class Circle(Figure):
 class Triangle(Figure):
     def __init__(self, a, b, c):
         # Проверим, чтобы длины сторон (достаточно проверить наибольшую)
-        # не превышали и не были равны сумме длин двух других.
+        # не превышали и не были равны сумме длин двух других. Заодно
+        # проверим, чтобы все они были больше нуля.
         sides = (a, b, c)
         for side in sides:
+            if side <= 0:
+                raise ValueError(
+                    'Стороны должны именть положительные значения. '
+                    'Получены значения {}, {}, {}.'.format(*sides))
             other_sides_sum = sum(sides) - side
             if side >= other_sides_sum:
                 raise ValueError(
